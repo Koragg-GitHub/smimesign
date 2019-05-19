@@ -14,9 +14,11 @@ init:
   - set CGO_ENABLED=1
   # Paths and Go environment
   - set GOPATH=c:\gopath
-  - set GOROOT=c:\go
+  - set GOROOT=c:\go112
   - set PATH=%GOROOT%\bin;%GOPATH%\bin;C:\msys64\usr\bin;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin;%PATH%
   - set PATH_WAS=%PATH%
+  # appveyor sets GO111MODULE=auto, which we don't want
+  - set GO111MODULE=on
 
 install:
   - go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
@@ -25,10 +27,10 @@ install:
 before_build:
   # Figure out version numbers
   - git describe --tags > version
-  - set /p GIT_VERSION= < version
-  - FOR /F "delims=.- tokens=1" %%G IN (version) DO set VERSION_MAJOR=%%G
-  - FOR /F "delims=.- tokens=2" %%G IN (version) DO set VERSION_MINOR=%%G
-  - FOR /F "delims=.- tokens=3" %%G IN (version) DO set VERSION_PATCH=%%G
+  - FOR /F "delims=v tokens=1" %%G IN (version) DO set GIT_VERSION=%%G
+  - FOR /F "delims=v.- tokens=1" %%G IN (version) DO set VERSION_MAJOR=%%G
+  - FOR /F "delims=v.- tokens=2" %%G IN (version) DO set VERSION_MINOR=%%G
+  - FOR /F "delims=v.- tokens=3" %%G IN (version) DO set VERSION_PATCH=%%G
   # Generate resource.syso
   - go generate
 
@@ -67,7 +69,7 @@ artifacts:
   - path: smimesign-windows-*.zip
 
 deploy:
-  tag: $(GIT_VERSION)
+  tag: v$(GIT_VERSION)
   release: v$(GIT_VERSION)
   description: v$(GIT_VERSION)
   provider: GitHub
